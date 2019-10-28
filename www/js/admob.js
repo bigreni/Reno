@@ -2,7 +2,7 @@
         if ((/(ipad|iphone|ipod|android|windows phone)/i.test(navigator.userAgent))) {
             document.addEventListener('deviceready', checkFirstUse, false);
         } else {
-            checkFirstUse();
+            notFirstUse();
         }
     }
 
@@ -62,6 +62,12 @@
         askRating();
     }
 
+   function notFirstUse()
+    {
+        TransitMaster.StopTimes({arrivals: true, headingLabel: "Arrival"});
+        document.getElementById("screen").style.display = 'none';
+    }
+
 function askRating()
 {
   AppRate.preferences = {
@@ -86,7 +92,6 @@ TransitMaster.StopTimes = function (options) {
 
     var timer = null;
     var initialView = true;
-    $('#simplemenu').sidr();
     initialize();
 
     function initialize() {

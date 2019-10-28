@@ -1,6 +1,5 @@
 function loadFavorites()
 {
-    $('#simplemenu').sidr();
     var favStop = localStorage.getItem("Favorites");
     var arrFaves = favStop.split("|");
     var arrStops = null;
