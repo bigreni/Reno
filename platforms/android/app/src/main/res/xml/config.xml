@@ -55,7 +55,7 @@
     <allow-intent href="mailto:*" />
     <allow-intent href="geo:*" />
     <icon src="icon.png" />
-    <preference default="ca-app-pub-9249695405712287~6293300517" name="ADMOB_ANDROID_APP_ID" />
+    <preference default="ca-app-pub-9249695405712287~7163599950" name="ADMOB_ANDROID_APP_ID" />
     <preference default="20.4.0" name="PLAY_SERVICES_VERSION" />
     <allow-intent href="market:*" />
     <edit-config file="AndroidManifest.xml" mode="merge" target="/manifest/application">

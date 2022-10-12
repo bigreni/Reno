@@ -14,27 +14,6 @@ function loadFavorites()
     }
 }
 
-function saveFavorites()
-{
-    var favStop = localStorage.getItem("Favorites");
-    var newFave = $('#MainMobileContent_routeList option:selected').val() + ">" + $("#MainMobileContent_directionList option:selected").val() + ">" + $("#MainMobileContent_stopList option:selected").val() + ":" + $('#MainMobileContent_routeList option:selected').text() + " > " + $("#MainMobileContent_directionList option:selected").text() + " > " + $("#MainMobileContent_stopList option:selected").text();
-        if (favStop == null)
-        {
-            favStop = newFave;
-        }   
-        else if(favStop.indexOf(newFave) == -1)
-        {
-            favStop = favStop + "|" + newFave;               
-        }
-        else
-        {
-            $("#message").text('Stop is already favorited!!');
-            return;
-        }
-        localStorage.setItem("Favorites", favStop);
-        $("#message").text('Stop added to favorites!!');
-}
-
 function removeFavorite(index)
 {
     var favStop = localStorage.getItem("Favorites");
@@ -52,95 +31,44 @@ function removeFavorite(index)
     location.reload();
 }
 
-function loadArrivals(route,direction,stop)
+function loadArrivals(route,direction,stopCode)
 {
-    $.ajax({
-        type: "POST",
-        url: "http://webwatch.rtcwashoe.com/TMwebwatch/Arrivals.aspx/getStopTimes",
-        data: "{routeID: " + route + ",	directionID: " + direction + ",	stopID:	" + stop + ", useArrivalTimes:true}",
-        contentType: "application/json;	charset=utf-8",
-        dataType: "json",
-        success: function (msg) {
-            if (msg.d == null) {
-                msg.d = { errorMessage: "Sorry, an	internal error has occurred" };
-            }
-
-			if (msg.d.errorMessage == null && (msg.d.routeStops == null || msg.d.routeStops[0].stops == null || msg.d.routeStops[0].stops[0].crossings == null || msg.d.routeStops[0].stops[0].crossings.length == 0))
-				msg.d.errorMessage = "No upcoming stop times found";
-
-			if (msg.d.errorMessage != null)
-			{
-				displayError(msg.d.errorMessage);
-				return;
-			}
-
-			msg.d.stops = msg.d.routeStops[0].stops;
-
-            var count = msg.d.stops[0].crossings.length;
-            msg.d.heading = "Next " + (count > 1 ? count : "") + " Vehicle " + "Arrival" + (count > 1 ? "s" : "");
-
-            var result = $("#stopTemplate").render(msg.d);
-
-            //if (refresh)
-            //    $("#resultBox").html($(result).html());
-            //else
-            reset(true);
-            displayResultsBox(result);
-
-            //if (!refresh)
-            //    timer = window.setInterval(function () {
-            //        loadArrivals(true);
-            //    }, 30000);
-        },
-        error: function () {
-            displayError("Failed to	load stop times");
-        },
-        complete: function (jqXHR, textStatus) {
-            $("#stopWait").addClass("hidden");
+    var query_url = encodeURI("https://webservices.umoiq.com/service/publicJSONFeed?command=predictions&a=reno&r=" + route + "&s=" + stopCode);
+    var outputContainer = $('.js-next-bus-results');
+    $.getJSON(query_url, function(json) {
+        var arrivalHtml = '<table id="tblResults" cellpadding="0" cellspacing="0">';
+        var preds = {};
+        if (json.Error) {
+            arrivalHtml += '<tr><td>No Results</td></tr></table>';
+            $(outputContainer).html(arrivalHtml).show();
+            return;
         }
+        // This element only exists when no results
+        if (json.predictions.dirTitleBecauseNoPredictions) {
+            arrivalHtml += '<tr><td>No Results</td></tr></table>';
+            $(outputContainer).html(arrivalHtml).show();
+            return;
+        }
+        var rname = json.predictions.routeTag;
+        // Check to see if multiple directions were provided or just one
+        if (json.predictions.direction.constructor === Array) {
+            var dir = $('#MainMobileContent_directionList').val();
+            preds = json.predictions.direction[dir].prediction;
+            dir = json.predictions.direction[dir].title;
+        } else {
+            preds = json.predictions.direction.prediction;
+            dir = json.predictions.direction.title;
+        }
+        arrivalHtml += '<tr class="header"><th>' + rname + " " + dir + '</th></tr><tr><td class="spacer" colspan="3"></td></tr>'
+        if (preds.constructor === Array) {
+            for (var i in preds) {
+                arrivalHtml += '<tr class="predictions"><td>' + preds[i].minutes + ' min</td></tr>';
+                arrivalHtml += '<tr><td class="spacer" colspan="3"></td></tr>';
+            }
+        } else {
+            arrivalHtml += '<tr class="predictions"><td>' + preds.minutes + ' min</td></tr>';
+        }
+        arrivalHtml += '</table>';
+        $(outputContainer).html(arrivalHtml).show();
     });
 }
-
-    function displayError(error) {
-        reset(true);
-        displayResultsBox($("#errorTemplate").render({ error: error }));
-    }
-
-
-function displayResultsBox(html) {
-    // Unfortunately IE9 leaves	artifacts
-    var radius = $("#contentBox").css("border-radius");
-
-    $(html).hide().appendTo("#contentBox").toggle(500, function () {
-        $("#contentBox").css("border-radius", radius);
-        $(this).animate({ opacity: "1" }, 200);
-    });
-}
-
-function reset(instantRemove) {
-    //if (timer != null) {
-    //    window.clearInterval(timer);
-    //    timer = null;
-    //}
-
-    if ($("#resultBox").length > 0) {
-        if (instantRemove)
-            $("#resultBox").remove();
-        else
-            removeResultBox();
-    }
-}
-
-function removeResultBox() {
-    // Unfortunately IE9 leaves	artifacts
-    var shadow = $("#contentBox").css("box-shadow");
-    var shadowHide = shadow;
-
-    $("#resultBox").animate({ opacity: "0" }, 200, function () {
-        $("#contentBox").css("box-shadow", shadowHide);
-        $(this).toggle(500, function () {
-            $("#contentBox").css("box-shadow", shadow);
-            $(this).remove();
-        })
-    });
-} 
