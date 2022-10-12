@@ -1,0 +1,10 @@
+{
+  "devDependencies": {
+    "cordova-ios": "^6.2.0"
+  },
+  "cordova": {
+    "platforms": [
+      "ios"
+    ]
+  }
+}
