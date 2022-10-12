@@ -9,7 +9,7 @@ function loadFavorites()
     {
         arrStops = arrFaves[i].split(":");
         arrIds = arrStops[0].split(">");
-        text = '<li><button onclick=removeFavorite(' + i + '); style="background-color:red; border:none;float:right;">&#x2718;</button><a href="javascript:loadArrivals(' + arrIds[0] + ',' + arrIds[1] +',' + arrIds[2]  +')"; class="langOption"><h4 class="selectLanguage">' + arrStops[1] + '</h4></a></li>';
+        text = '<li><button onclick=removeFavorite(' + i + '); style="background-color:red; border:none;float:right;">&#x2718;</button><a href="javascript:loadArrivals(' + "'" + arrIds[0].trim() + "','" + arrIds[1].trim() + "','" + arrIds[2].trim() + "'"  +')"; class="langOption"><h4 class="selectLanguage">' + arrStops[1] + '</h4></a></li>';
 	    $("#lstFaves").append(text);
     }
 }
