@@ -123,103 +123,18 @@ function askRating()
     AppRate.promptForRating(false);
 }
 
-function getStops() {
-    // Clear cookies if	this is	a new selection
-    if (!initialView)
-        $.cookie("stop", null);
+var stopList = {};
+var routeConfig = {};
 
-    var list = $("#MainMobileContent_stopList");
-
-    $(list).get(0).options.length = 0;
-    //$("#MainMobileContent_stopList").text("Loading stops...");
-    $("#stopWait").removeClass("hidden");
-
-    $.ajax({
-        type: "POST",
-        url: "http://webwatch.rtcwashoe.com/TMwebwatch/Arrivals.aspx/getStops",
-        data: "{routeID: " + $("#MainMobileContent_routeList").val() + ",	directionID: " + $("#MainMobileContent_directionList").val() + "}",
-        contentType: "application/json;	charset=utf-8",
-        dataType: "json",
-        success: function (msg) {
-            if (msg.d == null || msg.d.length == 0) {
-                $("#MainMobileContent_stopList").text("No stops	found");
-                return;
-            }
-            $(list).empty();
-            $(list).get(0).options[$(list).get(0).options.length] = new Option("Select a stop...", "");
-
-            $.each(msg.d, function (index, item) {
-                $(list).append($("<option />").val(item.id).text(item.name));
-                //$(list).get(0).options[$(list).get(0).options.length] = new Option(item.name, item.id);
-            });
-
-            checkListCookie("stop", "MainMobileContent_stopList");
-
-            initialView = false;
-        },
-        error: function () {
-            $("#MainMobileContent_stopList").text("Failed to load stops");
-        },
-        complete: function (jqXHR, textStatus) {
-            $("#stopWait").addClass("hidden");
-        }
-    });
-    $("span").remove();
-    $(".dropList").select2();
-}
-
-function getArrivalTimes(refresh) {
-    if (!refresh) {
-        reset(true);
-        $("#stopWait").removeClass("hidden");
+function getStopList(json) {
+    var stopArray = json.route.stop;
+    var stops = {}
+    for (var i in stopArray) {
+        var stopName = stopArray[i].title;
+        var stopTag = stopArray[i].tag;
+        stops[stopTag] = stopName;
     }
-
-    $.ajax({
-        type: "POST",
-        url: "http://webwatch.rtcwashoe.com/TMwebwatch/Arrivals.aspx/getStopTimes",
-        data: "{routeID: " + $("#MainMobileContent_routeList").val() + ",	directionID: " + $("#MainMobileContent_directionList").val() + ",	stopID:	" + $("#MainMobileContent_stopList").val() + ", useArrivalTimes:	" + settings.arrivals + "}",
-        contentType: "application/json;	charset=utf-8",
-        dataType: "json",
-        success: function (msg) {
-            if (msg.d == null) {
-                msg.d = { errorMessage: "Sorry, an internal error has occurred" };
-            }
-
-            if (msg.d.errorMessage == null && (msg.d.routeStops == null || msg.d.routeStops[0].stops == null || msg.d.routeStops[0].stops[0].crossings == null || msg.d.routeStops[0].stops[0].crossings.length == 0))
-                msg.d.errorMessage = "No upcoming stop times found";
-
-            if (msg.d.errorMessage != null)
-            {
-                displayError(msg.d.errorMessage);
-                return;
-            }
-
-            msg.d.stops = msg.d.routeStops[0].stops;
-
-            var count = msg.d.stops[0].crossings.length;
-            msg.d.heading = "Next " + (count > 1 ? count : "") + " Vehicle " + settings.headingLabel + (count > 1 ? "s" : "");
-
-            var result = $("#stopTemplate").render(msg.d);
-
-            if (refresh)
-                $("#resultBox").html($(result).html());
-            else
-                displayResultsBox(result);
-
-            if (!refresh)
-                timer = window.setInterval(function () {
-                    getArrivalTimes(true);
-                }, 30000);
-        },
-        error: function () {
-            displayError("Failed to	load stop times");
-        },
-        complete: function (jqXHR, textStatus) {
-            $("#stopWait").addClass("hidden");
-        }
-    });
-    $("span").remove();
-    $(".dropList").select2();
+    return stops;
 }
 
 function displayError(error) {
@@ -267,23 +182,25 @@ function removeResultBox() {
 
 
 function getDirections() {
-    reset();
     var url = encodeURI("https://webservices.umoiq.com/service/publicJSONFeed?command=routeConfig&a=reno&r=" + $("#MainMobileContent_routeList").val());
     $.get(url, function(data) {processDirections(data); });
     $("span").remove();
     $(".dropList").select2();
     }
 
-    function processDirections(xml)
+    function processDirections(json)
     {
         var list = $("#MainMobileContent_directionList");
         $(list).empty();
         $(list).append($("<option disabled/>").val("0").text("- Select Direction -"));
-        if(xml == null || xml.route == null || xml.route.direction.length == 0)
+
+        if(json == null || json.route == null || json.route.direction.length == 0)
         {
             displayError("We are facing some technical issues. Please try again later.");
         }
-        var directionsTag = xml.route.direction;	
+        var directionsTag = json.route.direction;	
+        stopList = getStopList(json);
+        routeConfig = json;
 
         for (var i=0; i<directionsTag.length;i++)
         {
@@ -295,86 +212,68 @@ function getDirections() {
     }
         
 function getStops() {
-    reset();
-    var url = encodeURI("https://webservices.umoiq.com/service/publicJSONFeed?command=routeConfig&a=reno&r=" + $("#MainMobileContent_routeList").val());
-    $.get(url, function(data) {processStops(data); });
-    $("span").remove();
-    $(".dropList").select2();
-}
-
-function processStops(xml)
-{
+    var dir = $("#MainMobileContent_directionList").val()
     var list = $("#MainMobileContent_stopList");
     $(list).empty();
     $(list).append($("<option disabled/>").val("0").text("- Select Direction -"));
-    var direction = $("#MainMobileContent_routeList").val()
-    if(xml == null || xml.route == null || xml.route.direction.length == 0)
-    {
-        displayError("We are facing some technical issues. Please try again later.");
+    var stops = routeConfig.route.direction[dir].stop;
+    for (var i in stops) {
+        var stopTag = stops[i].tag;
+        var stopName = stopList[stopTag];
+        $(list).append($("<option />").val(stopTag).text(stopName));
     }
-    var directionsTag = xml.route.direction;	
-
-    for (var i=0; i<directionsTag.length;i++)
-    {
-        var dirname = directionsTag[i].title;
-        var dirnum = i
-        $(list).append($("<option />").val(dirnum).text(dirname));
-    }
-    $(list).val(0);
-}
-
-function getArrivalTimes(refresh) {
-    if (!refresh) {
-        reset(true);
-        $("#stopWait").removeClass("hidden");
-    }
-
-    $.ajax({
-        type: "POST",
-        url: "http://webwatch.rtcwashoe.com/TMwebwatch/Arrivals.aspx/getStopTimes",
-        data: "{routeID: " + $("#MainMobileContent_routeList").val() + ",	directionID: " + $("#MainMobileContent_directionList").val() + ",	stopID:	" + $("#MainMobileContent_stopList").val() + ", useArrivalTimes:	" + settings.arrivals + "}",
-        contentType: "application/json;	charset=utf-8",
-        dataType: "json",
-        success: function (msg) {
-            if (msg.d == null) {
-                msg.d = { errorMessage: "Sorry, an internal error has occurred" };
-            }
-
-            if (msg.d.errorMessage == null && (msg.d.routeStops == null || msg.d.routeStops[0].stops == null || msg.d.routeStops[0].stops[0].crossings == null || msg.d.routeStops[0].stops[0].crossings.length == 0))
-                msg.d.errorMessage = "No upcoming stop times found";
-
-            if (msg.d.errorMessage != null)
-            {
-                displayError(msg.d.errorMessage);
-                return;
-            }
-
-            msg.d.stops = msg.d.routeStops[0].stops;
-
-            var count = msg.d.stops[0].crossings.length;
-            msg.d.heading = "Next " + (count > 1 ? count : "") + " Vehicle " + settings.headingLabel + (count > 1 ? "s" : "");
-
-            var result = $("#stopTemplate").render(msg.d);
-
-            if (refresh)
-                $("#resultBox").html($(result).html());
-            else
-                displayResultsBox(result);
-
-            if (!refresh)
-                timer = window.setInterval(function () {
-                    getArrivalTimes(true);
-                }, 30000);
-        },
-        error: function () {
-            displayError("Failed to	load stop times");
-        },
-        complete: function (jqXHR, textStatus) {
-            $("#stopWait").addClass("hidden");
-        }
-    });
     $("span").remove();
     $(".dropList").select2();
+}
+
+function getArrivals()
+{
+    alert('1');
+    var route = $("#MainMobileContent_routeList").val()
+    var stopCode = $("#MainMobileContent_stopList").val();
+    getArrivalTimes(route, stopCode);
+}
+
+function getArrivalTimes(route, stopCode) {
+    var query_url = encodeURI("https://webservices.umoiq.com/service/publicJSONFeed?command=predictions&a=reno&r=" + route + "&s=" + stopCode);
+    var outputContainer = $('.js-next-bus-results');
+    $.getJSON(query_url, function(json) {
+        var arrivalHtml = "";
+        var preds = {};
+        if (json.Error) {
+            arrivalHtml += '<div class="nb-card no-results><span class="nb-card-title">No Results</span>';
+            $(outputContainer).html(arrivalHtml).show();
+            return;
+        }
+        // This element only exists when no results
+        if (json.predictions.dirTitleBecauseNoPredictions) {
+            arrivalHtml += '<div class="nb-card no-results><span class="nb-card-title">No Results</span>';
+            $(outputContainer).html(arrivalHtml).show();
+            return;
+        }
+    alert('2');
+        var rname = json.predictions.routeTag;
+        // Check to see if multiple directions were provided or just one
+        if (json.predictions.direction.constructor === Array) {
+            var dir = $('#MainMobileContent_directionList').val();
+            preds = json.predictions.direction[dir].prediction;
+            dir = json.predictions.direction[dir].title;
+        } else {
+            preds = json.predictions.direction.prediction;
+            dir = json.predictions.direction.title;
+        }
+        arrivalHtml += '<div class="nb-card"><span class="nb-card-title">' + rname + " " + dir + '</span>';
+        if (preds.constructor === Array) {
+            for (var i in preds) {
+                arrivalHtml += '<span class="nb-card-time">' + preds[i].minutes + ' min</span>';
+            }
+        } else {
+            arrivalHtml += '<span class="nb-card-time">' + preds.minutes + ' min</span>';
+        }
+        alert(arrivalHtml);
+        arrivalHtml += '</div>';
+        $(outputContainer).html(arrivalHtml).show();
+    });
 }
 
 function displayError(error) {
