@@ -195,6 +195,7 @@ function getArrivals()
 }
 
 function getArrivalTimes(route, stopCode) {
+    showAd();
     var query_url = encodeURI("https://webservices.umoiq.com/service/publicJSONFeed?command=predictions&a=reno&r=" + route + "&s=" + stopCode);
     var outputContainer = $('.js-next-bus-results');
     $.getJSON(query_url, function(json) {
