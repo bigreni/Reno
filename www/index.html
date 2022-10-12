@@ -5,7 +5,11 @@
 <meta name="format-detection" content="telephone=no" />
 <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width" />
 <link href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet">
-<link rel="stylesheet" type="text/css" href="css/index.css" />
+<script type="text/javascript">
+    var cachebuster = Math.round(new Date().getTime() / 1000);
+    document.write('<link rel="stylesheet" type="text/css" href="css/index.css?cb=' +cachebuster+'"></li' + 'nk>');
+    //document.write('<link rel="stylesheet" type="text/css" href="https://s3.us-east-2.amazonaws.com/bigreni.com/css/reno/index.css?cb=' +cachebuster+'"></li' + 'nk>');
+</script>
 <!-- Include jQuery Mobile stylesheets -->
 <!--<link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css">-->
 <!-- Include the jQuery library -->
@@ -36,10 +40,10 @@
 </head>
 <body>
     <script type="text/javascript" src="cordova.js"></script>
-    <script type="text/javascript" src="js/main.js"></script>
-    <script type="text/javascript" src="js/favorites.js"></script>
-    <script type="text/javascript" src="js/jquery.cookie.js"></script>
-    <script type="text/javascript" src="js/jsrender.min.js"></script>
+    <script type="text/javascript">
+        document.write('<script type="text/javascript" src="https://s3.us-east-2.amazonaws.com/bigreni.com/js/reno/main.js?cb=' +cachebuster+'"></scr' + 'ipt>');
+        // document.write('<script type="text/javascript" src="js/main.js?cb=' +cachebuster+'"></scr' + 'ipt>');
+    </script>	
             <div id="screen" class="splashscreen" style="display: none"></div>
 		        <script>
             // Show the splash screen with a loading message
@@ -117,16 +121,13 @@
         <label id="message" style="font-size: large;"></label> 
         <div class="js-next-bus-results" style="display:block; text-align: center;">
         </div>
-	<!-- Templates for stop times-->
-	<script id="errorTemplate" type="text/x-jquery-tmpl">
-		<div id="resultBox" class="errorBox"><table><tr><td>{{:error}}</td></tr></table></div>
-	</script>
+
 </div>
     <div id="footer">
       <div class="col-xs-12 navbar-inverse navbar-fixed-bottom">
       <div class="row" id="bottomNav">
         <div class="col-xs-6 text-center"><a href="index.html"><i class="glyphicon glyphicon-time"></i><br>Arrivals</a></div>
-        <div class="col-xs-6 text-center"><a href="Favorites.html"><i class="glyphicon glyphicon glyphicon-star-empty"></i><br>Favorites</a></div>
+        <div class="col-xs-6 text-center"><a href="javascript:loadFaves();"><i class="glyphicon glyphicon glyphicon-star-empty"></i><br>Favorites</a></div>
       </div>
       </div>
     </div>

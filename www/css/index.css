@@ -36,6 +36,32 @@ div#fullpage {
 	padding: 0;
 }
 
+#tblResults {
+    background-color: #003366;
+    color: #FFF;
+    margin: 0 2vw 0 2vw;
+    border:0; 
+    width: 96vw;
+    height: 100%;
+}
+
+td.spacer {
+    background-color: #FFF;
+    height: 5px;
+}
+
+tr.header{
+    /*color: #003366;*/
+    text-align: center;
+}
+th{
+    text-align: center;
+}
+
+tr.predictions{
+    font-size: large;
+}
+
 a.langOption{
     text-decoration: none;
 }
