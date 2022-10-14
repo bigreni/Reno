@@ -141,7 +141,14 @@ function displayError(error) {
     $("#message").text(error);   
 }
 
+function reset() {
+    $('.js-next-bus-results').html('').hide(); // reset output container's html
+    document.getElementById('btnSave').style.visibility = "hidden";
+    $("#message").text('');        
+}
+
 function getDirections() {
+    reset();
     var url = encodeURI("https://webservices.umoiq.com/service/publicJSONFeed?command=routeConfig&a=reno&r=" + $("#MainMobileContent_routeList").val());
     $.get(url, function(data) {processDirections(data); });
     $("span").remove();
@@ -172,6 +179,7 @@ function getDirections() {
     }
         
 function getStops() {
+    reset();
     var dir = $("#MainMobileContent_directionList").val()
     var list = $("#MainMobileContent_stopList");
     $("span").remove();
@@ -196,6 +204,7 @@ function getArrivals()
 
 function getArrivalTimes(route, stopCode) {
     showAd();
+    reset();
     var query_url = encodeURI("https://webservices.umoiq.com/service/publicJSONFeed?command=predictions&a=reno&r=" + route + "&s=" + stopCode);
     var outputContainer = $('.js-next-bus-results');
     $.getJSON(query_url, function(json) {
